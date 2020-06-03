@@ -16,60 +16,104 @@ scale = 1.
 trans = np.array([0.,0.,0.])
 t1 = 0.
 full_list = []
-cur_Node = None
 
 class Node:
     def __init__(self,name):
         self.name = name
         self.offset = np.zeros(3)
+        self.tree_index = -1
         self.channel_count = 0
         self.channel = []
         self.child = []
         self.parent = ''
-    # def set_offset(data):
-    #     self.offset = data
-    # def set_channel_count(data):
-    #     self.channel_count = data
-    # def add_channel(data):
-    #     self.channel.append(data)
-    # def add_child(node):
-    #     self.child.append(node)
-    # def set_parent(node):
-    #     self.parent = node
     
-# Make tree structure for parsing hierarchical model    
+# Make tree structure for parsing hierarchical model
+tree = []
+motion_start = 0 
 def make_tree():
-    global full_list, root
-    cur_Node = None
+    global full_list, tree, motion_start
+    tree = []
+    motion_start = 0
     i = 0
+    pre_index = -1
     while True:
         temp = full_list[i].split(' ')
         if temp[0] == "JOINT" or temp[0] == "ROOT":
-            temp_Node = None
+            temp_Node = Node(temp[1])
+            tree.append(temp_Node)
+            
+            # parent, child add
             if temp[0] == "JOINT":
-                new_Node = Node(temp[1])
-                temp_Node = new_Node
+                tree[pre_index].child.append(temp_Node)
+                temp_Node.parent = tree[pre_index]
             elif temp[0] == "ROOT":
-                root = Node(temp[1])
-                root.parent = cur_Node
-                
-            # temp_Node.parent = copy.deepcopy(cur_Node)
+                temp_Node.parent = None
+            
             # offset
             temp1 = full_list[i+2].split(' ')
             temp_Node.offset = np.array([int(temp1[1]),int(temp1[2]),int(temp1[3])])
+            
             # channel
             temp2 = full_list[i+3].split(' ')
             temp_Node.channel_count = int(temp2[1])
-            for j in range(root.channel_count):
+            for j in range(temp_Node.channel_count):
                 if temp2[2+j] == "XROTATION":
-                    root.channel.append("X")
+                    temp_Node.channel.append("XROT")
                 elif temp[2+j] == "YROTATION":
-                    root.channel.append("Y")
+                    temp_Node.channel.append("YROT")
                 elif temp[2+j] == "ZROTATION":
-                    root.channel.append("Z")
-            # child
-            
+                    temp_Node.channel.append("ZROT")
+                elif temp[2+j] == "XPOSITION":
+                    temp_Node.channel.append("XPOS")
+                elif temp[2+j] == "YPOSITION":
+                    temp_Node.channel.append("YPOS")
+                elif temp[2+j] == "ZPOSITION":
+                    temp_Node.channel.append("ZPOS")
+            # tree index
+            pre_index += 1
+            temp_Node.tree_index = pre_index
+            i += 4
+        elif temp[0] == "End":
+            temp_Node = Node("__END__")
+            tree[pre_index].child.append(temp_Node)
+            temp_Node.parent = tree[pre_index]
+            # offset
+            temp1 = full_list[i+2].split(' ')
+            temp_Node.offset = np.array([int(temp1[1]),int(temp1[2]),int(temp1[3])])
+            # tree index
+            pre_index += 1
+            temp_Node.tree_index = pre_index
+            i += 3
+        elif temp[0] == '}':
+            pre_index -= 1
+            i += 1
+        elif temp[0] == "MOTION":
+            motion_start = i
+            break
 
+def Euler_X(angle):
+    return np.array([])
+def draw_Model(node,motion_data,motion_index):
+    if node.channel_count == 0:
+        glPushMatrix()
+        glBegin(GL_LINES)
+        glVertex3fv(0.,0.,0.)
+        glTranslatef(node.offset[0],node.offset[1],node.offset[2])
+        glVertex3fv(0.,0.,0.)
+        glPopMatrix()
+    else:
+        M = np.zeros((4,4))
+        glPushMatrix()
+        glBegin(GL_LINES)
+        glVertex3fv(0.,0.,0.)
+        glTranslatef(node.offset[0],node.offset[1],node.offset[2])
+        for i in node.channel:
+            if i == "XROT":
+                
+        
+        
+        
+    
 def render():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glEnable(GL_DEPTH_TEST)
