@@ -23,16 +23,22 @@ def drawTriangle():
 def render():
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
     glLoadIdentity()
-    #original
-    drawFrame()
-    glColor3ub(255,255,255)
-    drawTriangle()
-    #transformation
-    glTranslatef(0.6,0,0)
-    glRotatef(30,0,0,1)
-    drawFrame()
-    glColor3ub(0,0,255)
-    drawTriangle()
+    glBegin(GL_LINES)
+    glVertex3fv(np.zeros(3))
+    #glVertex3fv(np.array([0.5,0.5,0.]))
+    glTranslatef(0.5,0.5,0.)
+    glVertex3fv(np.zeros(3))
+    glEnd()
+    # #original
+    # drawFrame()
+    # glColor3ub(255,255,255)
+    # drawTriangle()
+    # #transformation
+    # glTranslatef(0.6,0,0)
+    # glRotatef(30,0,0,1)
+    # drawFrame()
+    # glColor3ub(0,0,255)
+    # drawTriangle()
 
 def main():
     if not glfw.init():
