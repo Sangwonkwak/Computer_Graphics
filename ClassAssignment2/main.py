@@ -95,7 +95,7 @@ def render():
     
     glPushMatrix()
     # Resize_ratio
-    resize_ratio = 0.2
+    resize_ratio = 0.02
     glScalef(resize_ratio,resize_ratio,resize_ratio)
     if shading_type:
         drawObject_glDrawArray()

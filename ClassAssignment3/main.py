@@ -38,18 +38,22 @@ class Node:
 def print_data():
     global tree, full_list, motion_start, Frames
     
-    frame_time = float(full_list[motion_start+2].split(' ')[2])
+    temp_frame = full_list[motion_start+2].split(' ')
+    if len(temp_frame) == 2:
+        temp_frame = temp_frame[1].split('\t')
+        frame_time = float(temp_frame[1])
+    else:
+        frame_time = float(temp_frame[2])
     FPS = int(1/frame_time)
     print("Number of frames: %d\nFPS: %d"%(Frames,FPS))
     
     joint_num = 0
-    print("List of all joint names: ",end='')
+    print("List of all joint names: ")
     for i in tree:
         if i.name != "__END__":
             joint_num += 1
             print(i.name, end=' ')
     print("\nNumber of joints: %d"%(joint_num))
-       
 
 # Make tree structure for parsing hierarchical model
 def make_tree():
@@ -62,7 +66,7 @@ def make_tree():
     while True:
         temp = full_list[i].lstrip().split(' ')
         if temp[0] == "JOINT" or temp[0] == "ROOT":
-            temp_Node = Node(temp[1])
+            temp_Node = Node(temp[1].rstrip('\n'))
             tree.append(temp_Node)
             # parent, child add
             if temp[0] == "JOINT":
@@ -80,14 +84,16 @@ def make_tree():
             # 기본적으로 x,y,z position channel이 root에 있다고 가정
             if temp2[0] == "ROOT":
                 temp_Node.channel_count -= 3
+            
             for j in range(temp_Node.channel_count):
                 if(temp2[0] == "ROOT"):
                     j += 3
-                if temp2[2+j] == "XROTATION":
+                temp_str = temp2[2+j].rstrip('\n')
+                if temp_str == "XROTATION" or temp_str == "Xrotation":
                     temp_Node.channel.append("XROT")
-                elif temp2[2+j] == "YROTATION":
+                elif temp_str == "YROTATION" or temp_str == "Yrotation":
                     temp_Node.channel.append("YROT")
-                elif temp2[2+j] == "ZROTATION":
+                elif temp_str == "ZROTATION" or temp_str == "Zrotation":
                     temp_Node.channel.append("ZROT")
                 # elif temp[2+j] == "XPOSITION":
                 #     temp_Node.channel.append("XPOS")
@@ -120,7 +126,11 @@ def make_tree():
         else:
             i += 1
     cur_index = motion_start + 3
-    Frames = int(full_list[motion_start+1].split(' ')[1])
+    
+    temp_frame = full_list[motion_start+1].split(' ')
+    if len(temp_frame) == 1:
+        temp_frame = full_list[motion_start+1].split('\t')
+    Frames = int(temp_frame[1])
 
 
 motion_index = 0
@@ -192,6 +202,7 @@ def render():
     drawframe()
     drawgrid()
     motion_data = []
+    scale_ratio = 0.3
     if ENABLE_FLAG: 
         if START_FLAG:
             if count == Frames:
@@ -207,7 +218,7 @@ def render():
         else:
             motion_data = np.zeros(sum_channel)
         glColor3ub(0,0,200)
-        glScalef(.3,.3,.3)
+        glScalef(scale_ratio,scale_ratio,scale_ratio)
         motion_index = 0
         draw_Model(tree[0], motion_data)
 
