@@ -140,19 +140,25 @@ def draw_Model(node,motion_data):
     glPushMatrix()
     M = np.identity(4)
     if node.channel_count == 0:
-        glBegin(GL_LINES)
-        glVertex3fv(np.array([0.,0.,0.]))
-        M[:-1,3] = [node.offset[0], node.offset[1], node.offset[2]]
-        glVertex3fv((M @ np.array([0.,0.,0.,1.]))[:-1])
-        glEnd()
+        ###cube draw
+        draw_proper_cube(node.offset)
+        #######
+        # glBegin(GL_LINES)
+        # glVertex3fv(np.array([0.,0.,0.]))
+        # M[:-1,3] = [node.offset[0], node.offset[1], node.offset[2]]
+        # glVertex3fv((M @ np.array([0.,0.,0.,1.]))[:-1])
+        # glEnd()
     # joint & root
     else:
         # root
         if node.tree_index == 0:
             glTranslatef(motion_data[0],motion_data[1],motion_data[2])
             motion_index = 3
-        glBegin(GL_LINES)
-        glVertex3fv(np.array([0.,0.,0.]))
+        # glBegin(GL_LINES)
+        # glVertex3fv(np.array([0.,0.,0.]))
+        ######cube draw
+        draw_proper_cube(node.offset)
+        #######
         M[:-1,3] = [node.offset[0], node.offset[1], node.offset[2]]
         
         for i in node.channel:
@@ -175,8 +181,8 @@ def draw_Model(node,motion_data):
                             ]
             M = M @ R
             motion_index += 1
-        glVertex3fv((M @ np.array([0.,0.,0.,1.]))[:-1])
-        glEnd()
+        # glVertex3fv((M @ np.array([0.,0.,0.,1.]))[:-1])
+        # glEnd()
         glMultMatrixf(M.T)
     
         for child in node.child:
@@ -202,7 +208,7 @@ def render():
     drawframe()
     drawgrid()
     motion_data = []
-    scale_ratio = 0.3
+    scale_ratio = 0.003
     if ENABLE_FLAG: 
         if START_FLAG:
             if count == Frames:
@@ -248,6 +254,70 @@ def drawframe():
     glVertex3fv(np.array([0.,0.,.1]))
     glEnd()
 
+def createVertexAndIndexArrayIndexed():
+    varr = np.array([
+            ( -1 ,  1 ,  1 ), # v0
+            (  1 ,  1 ,  1 ), # v1
+            (  1 , -1 ,  1 ), # v2
+            ( -1 , -1 ,  1 ), # v3
+            ( -1 ,  1 , -1 ), # v4
+            (  1 ,  1 , -1 ), # v5
+            (  1 , -1 , -1 ), # v6
+            ( -1 , -1 , -1 ), # v7
+            ], 'float32')
+    iarr = np.array([
+            (0,2,1),
+            (0,3,2),
+            (4,5,6),
+            (4,6,7),
+            (0,1,5),
+            (0,5,4),
+            (3,6,2),
+            (3,7,6),
+            (1,2,6),
+            (1,6,5),
+            (0,7,3),
+            (0,4,7),
+            ])
+    return varr, iarr
+
+def drawCube_glDrawElements():
+    global gVertexArrayIndexed, gIndexArray
+    varr = gVertexArrayIndexed
+    iarr = gIndexArray
+    glEnableClientState(GL_VERTEX_ARRAY)
+    glVertexPointer(3, GL_FLOAT, 3*varr.itemsize, varr)
+    glDrawElements(GL_TRIANGLES, iarr.size, GL_UNSIGNED_INT, iarr)
+
+def get_RotationM(offset):
+    a = 1.0
+    b = np.sqrt(np.dot(offset,offset))
+    temp = offset - np.array([1.0,0.,0.])
+    c = np.sqrt(np.dot(temp,temp))
+    th = np.arccos((a*a + b*b - c*c)/(2*a*b))
+    u = np.cross(np.array([1.0,0.,0.]),offset)
+    u /= np.sqrt(np.dot(u,u))
+    R = np.array([[np.cos(th)+u[0]*u[0]*(1-np.cos(th)), u[0]*u[1]*(1-np.cos(th))-u[2]*np.sin(th), u[0]*u[2]*(1-np.cos(th))+u[1]*np.sin(th)],
+                  [u[1]*u[0]*(1-np.cos(th))+u[2]*np.sin(th), np.cos(th)+u[1]*u[1]*(1-np.cos(th)), u[1]*u[2]*(1-np.cos(th))-u[0]*np.sin(th)],
+                  [u[2]*u[0]*(1-np.cos(th))-u[1]*np.sin(th), u[2]*u[1]*(1-np.cos(th))+u[0]*np.sin(th), np.cos(th)+u[2]*u[2]*(1-np.cos(th))]
+                  ])
+    return R
+
+def draw_proper_cube(offset):
+    M = np.identity(4)
+    half = np.sqrt(np.dot(offset,offset)) / 2.
+    M[:3,:3] = get_RotationM(offset)
+    
+    glPushMatrix()
+    glMultMatrixf(M.T)
+    glTranslatef(half,0.,0.)
+    scale_x = half * 0.9
+    scale_yz = scale_x * 0.2 
+    glScalef(scale_x, scale_yz, scale_yz)
+    glColor3ub(20,20,180)
+    drawCube_glDrawElements()
+    glPopMatrix()
+    
 def button_callback(window,button,action,mod):
     global Left_pressed,Right_pressed,init_pos
     if action == glfw.PRESS:
@@ -318,9 +388,11 @@ def key_callback(window, key, scancode, action, mods):
     if action==glfw.PRESS or action == glfw.REPEAT:
         if key == glfw.KEY_SPACE:
             START_FLAG = True
-
+            
+gVertexArrayIndexed = None
+gIndexArray = None
 def main():
-    global t1
+    global t1, gVertexArrayIndexed, gIndexArray
     if not glfw.init():
         return
     t1 = glfw.get_time()
@@ -336,6 +408,9 @@ def main():
     glfw.set_drop_callback(window,drop_callback)
     glfw.set_key_callback(window,key_callback)
     glfw.swap_interval(1)
+    
+    gVertexArrayIndexed, gIndexArray = createVertexAndIndexArrayIndexed()
+    
     while not glfw.window_should_close(window):
         glfw.poll_events()
         render()
