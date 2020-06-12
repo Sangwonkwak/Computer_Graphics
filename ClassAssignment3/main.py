@@ -57,9 +57,10 @@ def print_data():
 
 # Make tree structure for parsing hierarchical model
 def make_tree():
-    global full_list, tree, motion_start, sum_channel, cur_index, Frames
+    global full_list, tree, motion_start, sum_channel, cur_index, Frames, count
     tree = []
     motion_start = 0
+    count = 0
     i = 0
     sum_channel = 0
     pre_index = -1
@@ -95,12 +96,6 @@ def make_tree():
                     temp_Node.channel.append("YROT")
                 elif temp_str == "ZROTATION" or temp_str == "Zrotation":
                     temp_Node.channel.append("ZROT")
-                # elif temp[2+j] == "XPOSITION":
-                #     temp_Node.channel.append("XPOS")
-                # elif temp[2+j] == "YPOSITION":
-                #     temp_Node.channel.append("YPOS")
-                # elif temp[2+j] == "ZPOSITION":
-                #     temp_Node.channel.append("ZPOS")
             # tree index
             pre_index = len(tree) - 1
             temp_Node.tree_index = pre_index
@@ -143,19 +138,12 @@ def draw_Model(node,motion_data):
         ###cube draw
         draw_proper_cube(node.offset)
         #######
-        # glBegin(GL_LINES)
-        # glVertex3fv(np.array([0.,0.,0.]))
-        # M[:-1,3] = [node.offset[0], node.offset[1], node.offset[2]]
-        # glVertex3fv((M @ np.array([0.,0.,0.,1.]))[:-1])
-        # glEnd()
     # joint & root
     else:
         # root
         if node.tree_index == 0:
             glTranslatef(motion_data[0],motion_data[1],motion_data[2])
             motion_index = 3
-        # glBegin(GL_LINES)
-        # glVertex3fv(np.array([0.,0.,0.]))
         ######cube draw
         draw_proper_cube(node.offset)
         #######
@@ -181,8 +169,6 @@ def draw_Model(node,motion_data):
                             ]
             M = M @ R
             motion_index += 1
-        # glVertex3fv((M @ np.array([0.,0.,0.,1.]))[:-1])
-        # glEnd()
         glMultMatrixf(M.T)
     
         for child in node.child:
@@ -207,6 +193,54 @@ def render():
     
     drawframe()
     drawgrid()
+    
+    glPushMatrix()
+    
+    glEnable(GL_LIGHTING)
+    glEnable(GL_LIGHT0)
+    glEnable(GL_LIGHT1)
+    glEnable(GL_LIGHT2)
+    glEnable(GL_LIGHT3)
+    glEnable(GL_LIGHT4)
+    glEnable(GL_NORMALIZE)
+    
+    # Light setting
+    lightPos0 = (1., 1., 1., 1.)
+    lightPos1 = (1., 1., -1., 1.)
+    lightPos2 = (-1., 1., 1., 1.)
+    lightPos3 = (-1., 1., -1., 1.)
+    lightPos4 = (0., -1., 0., 0.)
+    glLightfv(GL_LIGHT0,GL_POSITION,lightPos0)
+    glLightfv(GL_LIGHT1,GL_POSITION,lightPos1)
+    glLightfv(GL_LIGHT2,GL_POSITION,lightPos2)
+    glLightfv(GL_LIGHT3,GL_POSITION,lightPos3)
+    glLightfv(GL_LIGHT4,GL_POSITION,lightPos4)
+    
+    lightColor1 = (.45, .45, .45, .45)
+    lightColor2 = (.3, .3, .3, .3)
+    ambientLightColor = (.1,.1,.1,1.)
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,lightColor1)
+    glLightfv(GL_LIGHT0,GL_SPECULAR,lightColor1)
+    glLightfv(GL_LIGHT0,GL_AMBIENT,ambientLightColor)
+    glLightfv(GL_LIGHT1,GL_DIFFUSE,lightColor1)
+    glLightfv(GL_LIGHT1,GL_SPECULAR,lightColor1)
+    glLightfv(GL_LIGHT1,GL_AMBIENT,ambientLightColor)
+    glLightfv(GL_LIGHT2,GL_DIFFUSE,lightColor1)
+    glLightfv(GL_LIGHT2,GL_SPECULAR,lightColor1)
+    glLightfv(GL_LIGHT2,GL_AMBIENT,ambientLightColor)
+    glLightfv(GL_LIGHT3,GL_DIFFUSE,lightColor1)
+    glLightfv(GL_LIGHT3,GL_SPECULAR,lightColor1)
+    glLightfv(GL_LIGHT3,GL_AMBIENT,ambientLightColor)
+    glLightfv(GL_LIGHT4,GL_DIFFUSE,lightColor2)
+    glLightfv(GL_LIGHT4,GL_SPECULAR,lightColor2)
+    glLightfv(GL_LIGHT4,GL_AMBIENT,ambientLightColor)
+    
+    # Object color setting
+    objectColor = (.3, .3, .7, 1.)
+    specularObjectColor = (1.,1.,1.,1.)
+    glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,objectColor)
+    glMaterialfv(GL_FRONT,GL_SHININESS,100)
+    glMaterialfv(GL_FRONT,GL_SPECULAR,specularObjectColor)
     motion_data = []
     scale_ratio = 0.003
     if ENABLE_FLAG: 
@@ -227,6 +261,9 @@ def render():
         glScalef(scale_ratio,scale_ratio,scale_ratio)
         motion_index = 0
         draw_Model(tree[0], motion_data)
+    
+    glDisable(GL_LIGHTING)
+    glPopMatrix()
 
 # draw grid
 def drawgrid():
@@ -256,13 +293,21 @@ def drawframe():
 
 def createVertexAndIndexArrayIndexed():
     varr = np.array([
+            (-0.5773502691896258, 0.5773502691896258, 0.5773502691896258),
             ( -1 ,  1 ,  1 ), # v0
+            (0.8164965809277261, 0.4082482904638631, 0.4082482904638631),
             (  1 ,  1 ,  1 ), # v1
+            (0.4082482904638631, -0.4082482904638631, 0.8164965809277261),
             (  1 , -1 ,  1 ), # v2
+            (-0.4082482904638631, -0.8164965809277261, 0.4082482904638631),
             ( -1 , -1 ,  1 ), # v3
+            (-0.4082482904638631, 0.4082482904638631, -0.8164965809277261),
             ( -1 ,  1 , -1 ), # v4
+            (0.4082482904638631, 0.8164965809277261, -0.4082482904638631),
             (  1 ,  1 , -1 ), # v5
+            (0.5773502691896258, -0.5773502691896258, -0.5773502691896258),
             (  1 , -1 , -1 ), # v6
+            (-0.8164965809277261, -0.4082482904638631, -0.4082482904638631),
             ( -1 , -1 , -1 ), # v7
             ], 'float32')
     iarr = np.array([
@@ -286,24 +331,27 @@ def drawCube_glDrawElements():
     varr = gVertexArrayIndexed
     iarr = gIndexArray
     glEnableClientState(GL_VERTEX_ARRAY)
-    glVertexPointer(3, GL_FLOAT, 3*varr.itemsize, varr)
-    glDrawElements(GL_TRIANGLES, iarr.size, GL_UNSIGNED_INT, iarr)
+    glEnableClientState(GL_NORMAL_ARRAY)
+    glNormalPointer(GL_FLOAT, 6*varr.itemsize, varr)
+    glVertexPointer(3, GL_FLOAT, 6*varr.itemsize, ctypes.c_void_p(varr.ctypes.data + 3*varr.itemsize))
+    glDrawElements(GL_TRIANGLES, iarr.size, GL_UNSIGNED_INT,iarr)
 
 def get_RotationM(offset):
     a = 1.0
     b = np.sqrt(np.dot(offset,offset))
     temp = offset - np.array([1.0,0.,0.])
     c = np.sqrt(np.dot(temp,temp))
-    th = np.arccos((a*a + b*b - c*c)/(2*a*b))
+    th = np.arccos((a*a + b*b - c*c)/(2.*a*b))
     u = np.cross(np.array([1.0,0.,0.]),offset)
     u /= np.sqrt(np.dot(u,u))
-    R = np.array([[np.cos(th)+u[0]*u[0]*(1-np.cos(th)), u[0]*u[1]*(1-np.cos(th))-u[2]*np.sin(th), u[0]*u[2]*(1-np.cos(th))+u[1]*np.sin(th)],
-                  [u[1]*u[0]*(1-np.cos(th))+u[2]*np.sin(th), np.cos(th)+u[1]*u[1]*(1-np.cos(th)), u[1]*u[2]*(1-np.cos(th))-u[0]*np.sin(th)],
-                  [u[2]*u[0]*(1-np.cos(th))-u[1]*np.sin(th), u[2]*u[1]*(1-np.cos(th))+u[0]*np.sin(th), np.cos(th)+u[2]*u[2]*(1-np.cos(th))]
+    R = np.array([[np.cos(th)+u[0]*u[0]*(1.-np.cos(th)), u[0]*u[1]*(1.-np.cos(th))-u[2]*np.sin(th), u[0]*u[2]*(1.-np.cos(th))+u[1]*np.sin(th)],
+                  [u[1]*u[0]*(1.-np.cos(th))+u[2]*np.sin(th), np.cos(th)+u[1]*u[1]*(1.-np.cos(th)), u[1]*u[2]*(1.-np.cos(th))-u[0]*np.sin(th)],
+                  [u[2]*u[0]*(1.-np.cos(th))-u[1]*np.sin(th), u[2]*u[1]*(1.-np.cos(th))+u[0]*np.sin(th), np.cos(th)+u[2]*u[2]*(1.-np.cos(th))]
                   ])
     return R
 
 def draw_proper_cube(offset):
+    global gVertexArrayIndexed
     M = np.identity(4)
     half = np.sqrt(np.dot(offset,offset)) / 2.
     M[:3,:3] = get_RotationM(offset)
@@ -314,7 +362,6 @@ def draw_proper_cube(offset):
     scale_x = half * 0.9
     scale_yz = scale_x * 0.2 
     glScalef(scale_x, scale_yz, scale_yz)
-    glColor3ub(20,20,180)
     drawCube_glDrawElements()
     glPopMatrix()
     
