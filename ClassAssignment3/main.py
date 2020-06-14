@@ -242,7 +242,7 @@ def render():
     glMaterialfv(GL_FRONT,GL_SHININESS,100)
     glMaterialfv(GL_FRONT,GL_SPECULAR,specularObjectColor)
     motion_data = []
-    scale_ratio = 0.003
+    scale_ratio = 0.3
     if ENABLE_FLAG: 
         if START_FLAG:
             if count == Frames:
