@@ -29,6 +29,7 @@ def render():
     global mode_type, shading_type
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glEnable(GL_DEPTH_TEST)
+    
     if mode_type:
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)
     else:

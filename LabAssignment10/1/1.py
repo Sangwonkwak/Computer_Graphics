@@ -4,6 +4,7 @@ from OpenGL.GLU import *
 import numpy as np
 from OpenGL.arrays import vbo
 import ctypes
+import os
 
 gCamAng = 0.
 gCamHeight = 1.
@@ -234,7 +235,7 @@ def render(ang):
     euler2 = np.array([0.,0.,1.])*np.radians(90)   # in ZYX Euler angles
     R2 = ZYXEulerToRotMat(euler2)  # in rotation matrix
     rv2 = log(R2)   # in rotation vector
-
+    print(R1.T @ R2)
     # t is repeatedly increasing from 0.0 to 1.0
     t = (ang % 360) / 360.
 
@@ -321,7 +322,8 @@ def main():
     glfw.make_context_current(window)
     glfw.set_key_callback(window, key_callback)
     glfw.swap_interval(1)
-
+    relative_path = ''.join(os.getcwd())
+    print(relative_path)
     # ...
     gVertexArraySeparate = createVertexArraySeparate()
 
